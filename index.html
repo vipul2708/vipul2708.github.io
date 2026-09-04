@@ -186,15 +186,32 @@ section:first-of-type{padding-top:0}
 @media (max-width:680px){.track .job{grid-template-columns:1fr; gap:6px}}
 
 /* ---------- about ---------- */
-.about{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); gap:clamp(30px,5vw,64px); align-items:start}
-@media (max-width:860px){.about{grid-template-columns:1fr}}
-.portrait{display:flex; flex-direction:column; gap:20px}
-.portrait figure{margin:0; display:flex; flex-direction:column; gap:10px}
-.portrait img{width:100%; aspect-ratio:4/5; object-fit:cover; border:1px solid var(--line-strong); filter:saturate(.92) contrast(1.03)}
-.portrait figcaption{font-family:var(--mono); font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
-.facts{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
-.facts li{border-bottom:1px solid var(--line); padding:11px 0; font-size:.92rem; color:var(--muted); display:flex; gap:12px}
-.facts li b{font-family:var(--mono); font-size:.66rem; letter-spacing:.13em; text-transform:uppercase; color:var(--data); flex:none; width:74px; padding-top:3px}
+.about{display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:clamp(28px,5vw,60px); align-items:stretch}
+.portrait{display:flex; flex-direction:column}
+.portrait figure{margin:0; display:flex; flex-direction:column; gap:10px; height:100%}
+.portrait img{width:100%; height:100%; min-height:400px; object-fit:cover; object-position:50% 18%;
+  border:1px solid var(--line-strong); filter:saturate(.92) contrast(1.03)}
+.portrait figcaption{flex:none; font-family:var(--mono); font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.about .body{display:flex; flex-direction:column}
+
+/* facts: full-width data strip below the two columns */
+.facts{margin:clamp(30px,4vw,44px) 0 0; padding:0; list-style:none;
+  display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid var(--line-strong)}
+.facts li{padding:18px 18px 0 0; border-right:1px solid var(--line);
+  display:flex; flex-direction:column; gap:7px; font-size:.9rem; color:var(--ink-dim); line-height:1.45}
+.facts li:last-child{border-right:0}
+.facts li b{font-family:var(--mono); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--data); font-weight:400}
+
+@media (max-width:860px){
+  .about{grid-template-columns:1fr; gap:26px}
+  /* square crop on mobile so the photo never dominates the screen */
+  .portrait img{aspect-ratio:1/1; height:auto; min-height:0; max-height:56vh; object-position:50% 22%}
+  .facts{grid-template-columns:1fr 1fr}
+  .facts li{padding:16px 14px 14px 0; border-bottom:1px solid var(--line)}
+  .facts li:nth-child(2n){border-right:0}
+  .facts li:last-child{border-bottom:0}
+}
+@media (max-width:420px){.facts{grid-template-columns:1fr} .facts li{border-right:0}}
 .about .body p{color:var(--ink-dim); margin-bottom:18px; max-width:60ch}
 .about .body h2{margin-bottom:22px}
 
@@ -455,13 +472,6 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
     <div class="about">
       <div class="portrait">
         <figure><img src="vipul.jpg" alt="Vipul Shukla" width="760" height="950" loading="lazy"><figcaption>Vipul Shukla · Delhi, India</figcaption></figure>
-        <ul class="facts">
-          <li><b>Based</b><span>Delhi, India — remote worldwide</span></li>
-          <li><b>Hours</b><span>Overlaps US, UK and AU time zones</span></li>
-          <li><b>Study</b><span>B.Com, University of Delhi (2020–2023)</span></li>
-          <li><b>Terms</b><span>Monthly retainer or per project</span></li>
-          <li><b>Reply</b><span>Usually within a few hours</span></li>
-        </ul>
       </div>
       <div class="body">
         <h2>I edit for performance, not for applause.</h2>
@@ -470,6 +480,13 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
         <p>I'm also fluent in an AI-assisted post workflow — voiceover and dubbing, auto-captioning, upscaling, background removal, automated motion-graphics builds. In practice that means faster turnarounds and more creative variations, without the quality dropping.</p>
       </div>
     </div>
+    <ul class="facts">
+      <li><b>Based</b><span>Delhi, India — remote worldwide</span></li>
+      <li><b>Hours</b><span>Overlaps US, UK and AU time zones</span></li>
+      <li><b>Study</b><span>B.Com, University of Delhi (2020–2023)</span></li>
+      <li><b>Terms</b><span>Monthly retainer or per project</span></li>
+      <li><b>Reply</b><span>Usually within a few hours</span></li>
+    </ul>
   </section>
 
   <!-- TOOLKIT -->
