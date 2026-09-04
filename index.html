@@ -101,8 +101,36 @@ section:first-of-type{padding-top:0}
 .nav-links a{font-family:var(--mono); font-size:.74rem; letter-spacing:.13em; text-transform:uppercase;
   color:var(--muted); text-decoration:none; transition:color .18s}
 .nav-links a:hover{color:var(--ink)}
-.nav-cta{justify-self:end}
-@media (max-width:860px){.nav-links{display:none} .nav-in{grid-template-columns:1fr auto}}
+.nav-cta{justify-self:end; display:flex; align-items:center; gap:10px}
+
+/* mobile menu */
+.burger{display:none; width:40px; height:40px; flex:none; align-items:center; justify-content:center;
+  background:transparent; border:1px solid var(--line-strong); border-radius:2px; cursor:pointer; padding:0}
+.burger span{display:block; position:relative; width:17px; height:1.5px; background:var(--ink); transition:transform .2s,opacity .2s}
+.burger span::before,.burger span::after{content:""; position:absolute; left:0; width:17px; height:1.5px; background:var(--ink); transition:transform .2s}
+.burger span::before{top:-5.5px}
+.burger span::after{top:5.5px}
+.burger[aria-expanded="true"] span{background:transparent}
+.burger[aria-expanded="true"] span::before{transform:translateY(5.5px) rotate(45deg)}
+.burger[aria-expanded="true"] span::after{transform:translateY(-5.5px) rotate(-45deg)}
+.mobile-menu{display:none}
+
+@media (max-width:860px){
+  .nav-links{display:none}
+  .nav-in{grid-template-columns:1fr auto}
+  .burger{display:flex}
+  .nav-cta .btn{display:none}
+  .mobile-menu{display:block; position:absolute; left:0; right:0; top:100%;
+    background:var(--bg); border-bottom:1px solid var(--line-strong);
+    max-height:0; overflow:hidden; transition:max-height .26s ease}
+  .mobile-menu[data-open="true"]{max-height:80vh}
+  .mobile-menu ul{margin:0; padding:0 var(--pad) 18px; list-style:none; display:flex; flex-direction:column}
+  .mobile-menu li{border-bottom:1px solid var(--line)}
+  .mobile-menu li:last-child{border-bottom:0}
+  .mobile-menu a{display:block; padding:16px 0; text-decoration:none;
+    font-family:var(--mono); font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink)}
+  .mobile-menu .wa{margin:16px var(--pad) 20px; text-align:center; justify-content:center; display:flex}
+}
 
 /* ---------- buttons ---------- */
 .btn{display:inline-flex; align-items:center; gap:9px; text-decoration:none; cursor:pointer;
@@ -257,7 +285,20 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
       <a href="#about">About</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-primary btn-sm nav-cta" href="https://wa.me/917247424089?text=Hi%20Vipul%2C%20I%20saw%20your%20portfolio%20and%20I%27d%20like%20to%20talk%20about%20a%20video%20project." target="_blank" rel="noopener">WhatsApp me</a>
+    <div class="nav-cta">
+      <a class="btn btn-primary btn-sm" href="https://wa.me/917247424089?text=Hi%20Vipul%2C%20I%20saw%20your%20portfolio%20and%20I%27d%20like%20to%20talk%20about%20a%20video%20project." target="_blank" rel="noopener">WhatsApp me</a>
+      <button class="burger" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu"><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" data-open="false">
+    <ul>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#record">Track record</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn btn-primary wa" href="https://wa.me/917247424089?text=Hi%20Vipul%2C%20I%20saw%20your%20portfolio%20and%20I%27d%20like%20to%20talk%20about%20a%20video%20project." target="_blank" rel="noopener">Message me on WhatsApp</a>
   </div>
 </header>
 
@@ -555,5 +596,19 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
   </div>
 </footer>
 
+<script>
+(function(){
+  var b=document.getElementById('burger'), m=document.getElementById('mobile-menu');
+  if(!b||!m) return;
+  function set(open){
+    b.setAttribute('aria-expanded', open?'true':'false');
+    m.setAttribute('data-open', open?'true':'false');
+    b.setAttribute('aria-label', open?'Close menu':'Open menu');
+  }
+  b.addEventListener('click', function(){ set(b.getAttribute('aria-expanded')!=='true'); });
+  m.addEventListener('click', function(e){ if(e.target.closest('a')) set(false); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') set(false); });
+})();
+</script>
 </body>
 </html>
