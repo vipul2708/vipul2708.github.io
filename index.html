@@ -208,16 +208,14 @@ section:first-of-type{padding-top:0}
 .filter-btn[aria-pressed="true"]{background:var(--tally); border-color:var(--tally); color:#FFF6F4}
 
 /* ---------- marquee reel rows ---------- */
-.marquee-row{position:relative; overflow:hidden; margin-bottom:20px;
+.marquee-row{position:relative; overflow-x:auto; overflow-y:hidden; margin-bottom:20px;
+  -webkit-overflow-scrolling:touch; touch-action:pan-x; scrollbar-width:none; -ms-overflow-style:none;
+  cursor:grab; user-select:none;
   mask-image:linear-gradient(to right,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%);
   -webkit-mask-image:linear-gradient(to right,transparent 0,#000 40px,#000 calc(100% - 40px),transparent 100%)}
-.marquee-track{display:flex; gap:16px; width:max-content; will-change:transform}
-.marquee-row.dir-left .marquee-track{animation:mq-left 46s linear infinite}
-.marquee-row.dir-right .marquee-track{animation:mq-right 46s linear infinite}
-.marquee-row:hover .marquee-track{animation-play-state:paused}
-@keyframes mq-left{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes mq-right{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-@media (prefers-reduced-motion:reduce){.marquee-track{animation:none!important}}
+.marquee-row::-webkit-scrollbar{display:none}
+.marquee-row.grabbing{cursor:grabbing}
+.marquee-track{display:flex; gap:16px; width:max-content}
 
 .mq-card{flex:none; position:relative; background:#000; border:1px solid var(--line); cursor:pointer;
   overflow:hidden; transition:transform .18s,border-color .18s}
@@ -400,14 +398,11 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
     <div class="wrap credits-in">
       <p class="meta">Edited for</p>
       <div class="logo-row">
-        <span class="logo-chip"><img src="logos/grow-profit.png" alt="Grow Profit"></span>
-        <span class="logo-chip"><img src="logos/funnels-traffic.jpg" alt="Funnels Traffic"></span>
-        <span class="logo-chip"><img src="logos/agp.jpg" alt="Aggrawal Group of Publication"></span>
-        <span class="logo-chip"><img src="logos/monk-media.jpg" alt="Monk Media"></span>
+        <span class="logo-chip"><img src="logo-grow-profit.png" alt="Grow Profit"></span>
+        <span class="logo-chip"><img src="logo-funnels-traffic.jpg" alt="Funnels Traffic"></span>
+        <span class="logo-chip"><img src="logo-agp.jpg" alt="Aggrawal Group of Publication"></span>
+        <span class="logo-chip"><img src="logo-monk-media.jpg" alt="Monk Media"></span>
       </div>
-      <ul>
-        <li>Amazon &amp; Flipkart campaigns</li>
-      </ul>
     </div>
   </div>
 
@@ -714,11 +709,101 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
   function cardHTML(v){
     var ar = v.shape === 'v' ? 'r916' : 'r169';
     return '<div class="mq-card ' + ar + '" data-id="' + v.id + '" data-shape="' + v.shape + '" data-title="' + v.title + '">' +
-      '<img src="https://i.ytimg.com/vi/' + v.id + '/hqdefault.jpg" alt="' + v.title + '" loading="lazy">' +
+      '<img src="https://i.ytimg.com/vi/' + v.id + '/hqdefault.jpg" alt="' + v.title + '" loading="lazy" draggable="false">' +
       '<span class="play" aria-hidden="true"></span>' +
       '<span class="cap">' + CAT_LABEL[v.cat] + '</span>' +
     '</div>';
   }
+
+  // ---- auto-scroll + drag-to-scroll marquee engine ----
+  var SPEED = 30; // px/second, base auto-scroll speed (raised ~8% over the original timing)
+  var rows = []; // {el, track, dir, loopWidth, pos, paused, resumeAt}
+
+  function setupRow(el, track, dir){
+    var loopWidth = track.scrollWidth / 2;
+    var state = {el:el, track:track, dir:dir, loopWidth:loopWidth, paused:false, resumeAt:0, adjusting:false};
+    el.scrollLeft = dir === 1 ? 0 : loopWidth;
+    bindRowInteraction(state);
+    return state;
+  }
+
+  function bindRowInteraction(state){
+    var el = state.el;
+    var dragging = false, movedFar = false, startX = 0, startScroll = 0, pressedCard = null;
+
+    function pause(){ state.paused = true; state.resumeAt = Infinity; }
+    function resumeSoon(){ state.resumeAt = performance.now() + 1200; }
+
+    el.addEventListener('pointerdown', function(e){
+      dragging = true; movedFar = false;
+      pressedCard = e.target.closest('.mq-card');
+      startX = e.clientX; startScroll = el.scrollLeft;
+      el.classList.add('grabbing');
+      pause();
+      try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      var dx = e.clientX - startX;
+      if(Math.abs(dx) > 6) movedFar = true;
+      el.scrollLeft = startScroll - dx;
+    });
+    function endDrag(){
+      if(!dragging) return;
+      dragging = false;
+      el.classList.remove('grabbing');
+      resumeSoon();
+    }
+    el.addEventListener('pointerup', function(e){
+      // pointer capture retargets the click/mouseup to `el`, so open the video
+      // we noted at pointerdown time here instead of relying on e.target later.
+      if(!movedFar && pressedCard){ openVideoFromCard(pressedCard); }
+      endDrag();
+    });
+    el.addEventListener('pointercancel', endDrag);
+    el.addEventListener('pointerleave', function(){ if(dragging) endDrag(); });
+    // trackpad horizontal swipe also counts as manual interaction
+    el.addEventListener('wheel', function(e){
+      if(Math.abs(e.deltaX) > Math.abs(e.deltaY)){ pause(); resumeSoon(); }
+    }, {passive:true});
+    // keep manual scrolling (drag or wheel) from ever hitting a hard edge
+    el.addEventListener('scroll', function(){
+      if(state.adjusting) return;
+      var max = el.scrollWidth - el.clientWidth;
+      if(el.scrollLeft < 40){
+        state.adjusting = true; el.scrollLeft += state.loopWidth; state.adjusting = false;
+      } else if(el.scrollLeft > max - 40){
+        state.adjusting = true; el.scrollLeft -= state.loopWidth; state.adjusting = false;
+      }
+    });
+    // pointer capture retargets the native click here too - always swallow it,
+    // since pointerup above already handled opening the video when appropriate.
+    el.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); }, true);
+  }
+
+  function tick(now, dt){
+    rows.forEach(function(state){
+      if(state.paused){
+        if(now >= state.resumeAt) state.paused = false;
+        return;
+      }
+      var el = state.el;
+      el.scrollLeft += state.dir * SPEED * dt;
+      var max = el.scrollWidth - el.clientWidth;
+      if(el.scrollLeft <= 0) el.scrollLeft += state.loopWidth;
+      else if(el.scrollLeft >= max) el.scrollLeft -= state.loopWidth;
+    });
+  }
+  var lastT = null;
+  function raf(now){
+    if(lastT != null){
+      var dt = Math.min((now - lastT) / 1000, 0.05);
+      tick(now, dt);
+    }
+    lastT = now;
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
 
   function render(filter){
     var list = filter ? VIDEOS.filter(function(v){ return v.cat === filter; }) : VIDEOS;
@@ -726,14 +811,17 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
     var wide = list.filter(function(v){ return v.shape === 'w'; });
 
     function fill(track, row, items){
-      if(!items.length){ row.style.display = 'none'; track.innerHTML = ''; return; }
+      if(!items.length){ row.style.display = 'none'; track.innerHTML = ''; return null; }
       row.style.display = '';
-      // duplicate the set so the CSS marquee loop is seamless
       var html = items.map(cardHTML).join('');
       track.innerHTML = html + html;
+      return true;
     }
-    fill(trackV, rowV, vertical);
-    fill(trackW, rowW, wide);
+    var hasV = fill(trackV, rowV, vertical);
+    var hasW = fill(trackW, rowW, wide);
+    rows = [];
+    if(hasV) rows.push(setupRow(rowV, trackV, 1));
+    if(hasW) rows.push(setupRow(rowW, trackW, -1));
   }
 
   filterBtns.forEach(function(btn){
@@ -758,15 +846,14 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
       '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
     lb.setAttribute('data-open', 'true');
   }
+  function openVideoFromCard(card){
+    openVideo(card.getAttribute('data-id'), card.getAttribute('data-shape'), card.getAttribute('data-title'));
+  }
   function closeVideo(){
     lb.setAttribute('data-open', 'false');
     lbFrame.innerHTML = '';
   }
 
-  document.addEventListener('click', function(e){
-    var card = e.target.closest('.mq-card');
-    if(card){ openVideo(card.getAttribute('data-id'), card.getAttribute('data-shape'), card.getAttribute('data-title')); }
-  });
   lbClose.addEventListener('click', closeVideo);
   lb.addEventListener('click', function(e){ if(e.target === lb) closeVideo(); });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeVideo(); });
