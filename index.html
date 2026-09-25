@@ -699,7 +699,7 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
     {id:'Or92FcsCaTU', cat:'vsl', shape:'w', title:'Video Sales Letter'},
 
     {id:'If7C1tGamTs', cat:'ai', shape:'v', title:'AI Music Video'},
-    {id:'OPKVq7KiOfA', cat:'ai', shape:'w', title:'AI Mini Movie'}
+    {id:'OPKVq7KiOfA', cat:'ai', shape:'v', title:'AI Mini Movie'}
   ];
   var CAT_LABEL = {ads:'Ads', short:'Short form', motion:'Motion graphic', vsl:'VSL'};
 
@@ -818,13 +818,14 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
       if(!items.length){ row.style.display = 'none'; track.innerHTML = ''; return null; }
       row.style.display = '';
       var html = items.map(cardHTML).join('');
-      track.innerHTML = html + html;
+      track.innerHTML = filter === 'ai' ? html : html + html;
       return true;
     }
     var hasV = fill(trackV, rowV, vertical);
     var hasW = fill(trackW, rowW, wide);
     rows = [];
-    if(hasV) rows.push(setupRow(rowV, trackV, 1));
+    if(hasV && filter !== 'ai') rows.push(setupRow(rowV, trackV, 1));
+    else if(hasV) rowV.scrollLeft = 0;
     if(hasW) rows.push(setupRow(rowW, trackW, -1));
   }
 
@@ -838,6 +839,11 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
   });
 
   render(null);
+
+  trackV.addEventListener('click', function(e){
+    var c = e.target.closest('.mq-card');
+    if(c && activeFilter === 'ai') openVideoFromCard(c);
+  });
 
   // ---- lightbox ----
   var lb = document.getElementById('lightbox');
