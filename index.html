@@ -819,6 +819,14 @@ footer{border-top:1px solid var(--line); padding-block:34px 46px}
       row.style.display = '';
       var html = items.map(cardHTML).join('');
       track.innerHTML = filter === 'ai' ? html : html + html;
+      if(filter !== 'ai'){
+        var half = track.scrollWidth / 2, need = row.clientWidth * 1.5;
+        if(half > 0 && half < need){
+          var reps = Math.ceil(need / half), set = '';
+          for(var i = 0; i < reps; i++) set += html;
+          track.innerHTML = set + set;
+        }
+      }
       return true;
     }
     var hasV = fill(trackV, rowV, vertical);
